@@ -7,7 +7,10 @@
 
 package frc.robot;
 
+import edu.wpi.first.wpilibj.Joystick;
+import edu.wpi.first.wpilibj.Spark;
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.drive.MecanumDrive;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
@@ -23,6 +26,12 @@ public class Robot extends TimedRobot {
   private static final String kCustomAuto = "My Auto";
   private String m_autoSelected;
   private final SendableChooser<String> m_chooser = new SendableChooser<>();
+  private Joystick controller;
+  private MecanumDrive robotDrive;
+  private Spark motor1;
+  private Spark motor2;
+  private Spark motor3;
+  private Spark motor4;
 
   /**
    * This function is run when the robot is first started up and should be
@@ -33,6 +42,13 @@ public class Robot extends TimedRobot {
     m_chooser.setDefaultOption("Default Auto", kDefaultAuto);
     m_chooser.addOption("My Auto", kCustomAuto);
     SmartDashboard.putData("Auto choices", m_chooser);
+
+    controller = new Joystick(0);
+    motor1 = new Spark(0);
+    motor2 = new Spark(1);
+    motor3 = new Spark(2);
+    motor4 = new Spark(3);
+    robotDrive = new MecanumDrive(motor4, motor1, motor3, motor2);
   }
 
   /**
@@ -86,6 +102,7 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void teleopPeriodic() {
+    robotDrive.driveCartesian(controller.getY(), controller.getX(), controller.getZ());
   }
 
   /**
