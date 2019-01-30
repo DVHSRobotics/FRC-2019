@@ -7,7 +7,9 @@
 
 package frc.robot;
 
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Joystick;
+import edu.wpi.first.wpilibj.RobotDrive;
 import edu.wpi.first.wpilibj.Spark;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.drive.MecanumDrive;
@@ -28,10 +30,7 @@ public class Robot extends TimedRobot {
   private final SendableChooser<String> m_chooser = new SendableChooser<>();
   private Joystick controller;
   private MecanumDrive robotDrive;
-  private Spark motor1;
-  private Spark motor2;
-  private Spark motor3;
-  private Spark motor4;
+  private Spark frontLeftMotor, rearLeftMotor, frontRightMotor, rearRightMotor;
 
   /**
    * This function is run when the robot is first started up and should be
@@ -44,11 +43,12 @@ public class Robot extends TimedRobot {
     SmartDashboard.putData("Auto choices", m_chooser);
 
     controller = new Joystick(0);
-    motor1 = new Spark(0);
-    motor2 = new Spark(1);
-    motor3 = new Spark(2);
-    motor4 = new Spark(3);
-    robotDrive = new MecanumDrive(motor4, motor1, motor3, motor2);
+    rearLeftMotor = new Spark(0);
+    rearRightMotor = new Spark(1);
+    frontRightMotor = new Spark(2);
+    frontLeftMotor = new Spark(3);
+    robotDrive = new MecanumDrive(frontLeftMotor, rearLeftMotor, frontRightMotor, rearRightMotor);
+
   }
 
   /**
@@ -61,6 +61,7 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void robotPeriodic() {
+    System.out.println("Y: " + controller.getYChannel() + " X: " + controller.getXChannel() + " Z: " + controller.getZChannel());
   }
 
   /**
@@ -97,12 +98,26 @@ public class Robot extends TimedRobot {
     }
   }
 
+  @Override
+  public void teleopInit() {
+    super.teleopInit();
+  }
+
   /**
    * This function is called periodically during operator control.
    */
   @Override
   public void teleopPeriodic() {
+    controller.setZChannel(3); // 1: Right joystick up
+    controller.setYChannel(2); // 0: Left joystick up
+    controller.setXChannel(0); // 2: Left joystick side-to-side
     robotDrive.driveCartesian(controller.getY(), controller.getX(), controller.getZ());
+    // Default: 1 0 2
+  }
+
+  @Override
+  public void testInit() {
+    super.testInit();
   }
 
   /**
