@@ -7,12 +7,18 @@
 
 package frc.robot;
 
+import edu.wpi.first.wpilibj.ADXRS450_Gyro;
+import edu.wpi.first.wpilibj.AnalogGyro;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Joystick;
+import edu.wpi.first.wpilibj.PIDController;
+import edu.wpi.first.wpilibj.PIDOutput;
 import edu.wpi.first.wpilibj.RobotDrive;
+import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj.Spark;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.drive.MecanumDrive;
+import edu.wpi.first.wpilibj.interfaces.Gyro;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
@@ -23,7 +29,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
  * creating this project, you must also update the build.gradle file in the
  * project.
  */
-public class Robot extends TimedRobot {
+public class Robot extends TimedRobot implements PIDOutput {
   private static final String kDefaultAuto = "Default";
   private static final String kCustomAuto = "My Auto";
   private String m_autoSelected;
@@ -31,6 +37,10 @@ public class Robot extends TimedRobot {
   private Joystick controller;
   private MecanumDrive robotDrive;
   private Spark frontLeftMotor, rearLeftMotor, frontRightMotor, rearRightMotor;
+  private Gyro gyro;
+  // Boilerplate for later
+  private PIDController pid;
+  private double kP, kI, kD;
 
   /**
    * This function is run when the robot is first started up and should be
@@ -41,6 +51,7 @@ public class Robot extends TimedRobot {
     m_chooser.setDefaultOption("Default Auto", kDefaultAuto);
     m_chooser.addOption("My Auto", kCustomAuto);
     SmartDashboard.putData("Auto choices", m_chooser);
+    m_period = .02;
 
     controller = new Joystick(0);
     rearLeftMotor = new Spark(0);
@@ -48,6 +59,7 @@ public class Robot extends TimedRobot {
     frontRightMotor = new Spark(2);
     frontLeftMotor = new Spark(3);
     robotDrive = new MecanumDrive(frontLeftMotor, rearLeftMotor, frontRightMotor, rearRightMotor);
+    gyro = new ADXRS450_Gyro(SPI.Port.kOnboardCS0);
 
   }
 
@@ -61,7 +73,8 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void robotPeriodic() {
-    System.out.println("Y: " + controller.getYChannel() + " X: " + controller.getXChannel() + " Z: " + controller.getZChannel());
+    // System.out.println("Y: " + controller.getYChannel() + " X: " + controller.getXChannel() + " Z: " + controller.getZChannel());
+    System.out.println("Angle = " + gyro.getRate()); // Currently only outputs 0
   }
 
   /**
@@ -126,4 +139,9 @@ public class Robot extends TimedRobot {
   @Override
   public void testPeriodic() {
   }
+
+  @Override
+  public void pidWrite(double output) {
+  }
+  
 }
