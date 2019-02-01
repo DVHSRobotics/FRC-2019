@@ -9,6 +9,7 @@ package frc.robot;
 
 import edu.wpi.first.wpilibj.ADXRS450_Gyro;
 import edu.wpi.first.wpilibj.AnalogGyro;
+import edu.wpi.first.wpilibj.BuiltInAccelerometer;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.PIDController;
@@ -18,6 +19,7 @@ import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj.Spark;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.drive.MecanumDrive;
+import edu.wpi.first.wpilibj.interfaces.Accelerometer;
 import edu.wpi.first.wpilibj.interfaces.Gyro;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -38,6 +40,7 @@ public class Robot extends TimedRobot implements PIDOutput {
   private MecanumDrive robotDrive;
   private Spark frontLeftMotor, rearLeftMotor, frontRightMotor, rearRightMotor;
   private Gyro gyro;
+  private Accelerometer accel;
   // Boilerplate for later
   private PIDController pid;
   private double kP, kI, kD;
@@ -59,7 +62,10 @@ public class Robot extends TimedRobot implements PIDOutput {
     frontRightMotor = new Spark(2);
     frontLeftMotor = new Spark(3);
     robotDrive = new MecanumDrive(frontLeftMotor, rearLeftMotor, frontRightMotor, rearRightMotor);
-    gyro = new ADXRS450_Gyro(SPI.Port.kOnboardCS0);
+    gyro = new ADXRS450_Gyro(SPI.Port.kOnboardCS0); // Gyro doesn't seem to work; returns 0 reading regardless of rotation
+    //gyro.calibrate();
+    //gyro.reset();
+    accel = new BuiltInAccelerometer(); // Needs to be calibrated
 
   }
 
@@ -74,7 +80,6 @@ public class Robot extends TimedRobot implements PIDOutput {
   @Override
   public void robotPeriodic() {
     // System.out.println("Y: " + controller.getYChannel() + " X: " + controller.getXChannel() + " Z: " + controller.getZChannel());
-    System.out.println("Angle = " + gyro.getRate()); // Currently only outputs 0
   }
 
   /**
@@ -126,6 +131,7 @@ public class Robot extends TimedRobot implements PIDOutput {
     controller.setXChannel(0); // 2: Left joystick side-to-side
     robotDrive.driveCartesian(controller.getY(), controller.getX(), controller.getZ());
     // Default: 1 0 2
+    System.out.println("Xaccel = " + accel.getX());
   }
 
   @Override
@@ -141,7 +147,17 @@ public class Robot extends TimedRobot implements PIDOutput {
   }
 
   @Override
+  public void disabledInit() {
+    super.disabledInit();
+  }
+
+  @Override
+  public void disabledPeriodic() {
+    super.disabledPeriodic();
+  }
+
+  @Override
   public void pidWrite(double output) {
   }
-  
+
 }
