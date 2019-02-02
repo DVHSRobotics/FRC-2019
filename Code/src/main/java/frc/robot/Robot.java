@@ -7,6 +7,10 @@
 
 package frc.robot;
 
+import com.kauailabs.navx.frc.AHRS;
+
+import edu.wpi.cscore.UsbCamera;
+import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.wpilibj.ADXRS450_Gyro;
 import edu.wpi.first.wpilibj.AnalogGyro;
 import edu.wpi.first.wpilibj.BuiltInAccelerometer;
@@ -18,6 +22,7 @@ import edu.wpi.first.wpilibj.RobotDrive;
 import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj.Spark;
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.SerialPort.Port;
 import edu.wpi.first.wpilibj.drive.MecanumDrive;
 import edu.wpi.first.wpilibj.interfaces.Accelerometer;
 import edu.wpi.first.wpilibj.interfaces.Gyro;
@@ -44,6 +49,9 @@ public class Robot extends TimedRobot implements PIDOutput {
   // Boilerplate for later
   private PIDController pid;
   private double kP, kI, kD;
+  private UsbCamera cam;
+  private AHRS ahrs;
+  private CameraServer camserv;
 
   /**
    * This function is run when the robot is first started up and should be
@@ -66,6 +74,8 @@ public class Robot extends TimedRobot implements PIDOutput {
     //gyro.calibrate();
     //gyro.reset();
     accel = new BuiltInAccelerometer(); // Needs to be calibrated
+    cam = new UsbCamera("camera", 0);
+    ahrs = new AHRS(Port.kMXP);
 
   }
 
@@ -131,7 +141,8 @@ public class Robot extends TimedRobot implements PIDOutput {
     controller.setXChannel(0); // 2: Left joystick side-to-side
     robotDrive.driveCartesian(controller.getY(), controller.getX(), controller.getZ());
     // Default: 1 0 2
-    System.out.println("Xaccel = " + accel.getX());
+    //System.out.println("Xaccel = " + accel.getX());
+    System.out.println("Angle = " + ahrs.getYaw());
   }
 
   @Override
