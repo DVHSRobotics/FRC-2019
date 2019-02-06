@@ -8,6 +8,7 @@
 package frc.robot;
 
 import com.kauailabs.navx.frc.AHRS;
+import com.revrobotics.*;
 
 import edu.wpi.cscore.UsbCamera;
 import edu.wpi.first.cameraserver.CameraServer;
@@ -49,7 +50,7 @@ public class Robot extends TimedRobot implements PIDOutput {
   // Boilerplate for later
   private PIDController pid;
   private double kP, kI, kD;
-  private UsbCamera cam;
+  private UsbCamera cam0;
   private AHRS ahrs;
   private CameraServer camserv;
 
@@ -74,7 +75,7 @@ public class Robot extends TimedRobot implements PIDOutput {
     //gyro.calibrate();
     //gyro.reset();
     accel = new BuiltInAccelerometer(); // Needs to be calibrated
-    cam = new UsbCamera("camera", 0);
+    cam0 = new UsbCamera("camera", 0);
     ahrs = new AHRS(Port.kMXP);
 
   }
