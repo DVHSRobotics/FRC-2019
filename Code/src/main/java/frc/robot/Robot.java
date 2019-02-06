@@ -29,6 +29,56 @@ import edu.wpi.first.wpilibj.interfaces.Gyro;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
+/*
+
+         Shitposting on Reddit
+
+               ,--""-.
+              (_,=-   )
+                `---#{
+                     `}
+
+          Shitposting on Slack
+
+               _---~~(~~-_.
+             _{        )   )
+           ,   ) -~~- ( ,-' )_
+          (  `-,_..`., )-- '_,)
+         ( ` _)  (  -~( -_ `,  }
+         (_-  _  ~_-~~~~`,  ,' )
+           `~ -^(    __;-,((()))
+                 ~~~~ {_ -_(())
+                        `\  }
+                          { }
+
+         Shitposting on the source code
+
+                  __,--"""""""""--,.
+             _ -'"                  _\ ^-,_
+          ,-"                     _/        \_
+         ,                    /    \          \
+       ,'                    /_    |           \
+      /           _____,--"""     /         )   \
+     /           /               /         (     |
+    |          /                /      )         |
+    |         /                |                  \
+    (     (_/\      )                 /            \
+     \        \_          ____,===="""    /        |
+      \                /"                /""       |
+       \_          _,-" |___,-'--------'"          |
+         "`------""   --"                 ,-'      /
+                /                     ---"        /
+                \___/          __,-----,___       )
+                    \     ,--'"============""""-'"
+                     "-'" |  |=================/
+                          /___\===============/
+                            /  |=============/"
+                           \   \_________,-"
+                           |   |
+                           |   |
+
+* */
+
 /**
  * The VM is configured to automatically run this class, and to call the
  * functions corresponding to each mode, as described in the TimedRobot
