@@ -9,9 +9,13 @@ package frc.robot;
 
 import com.kauailabs.navx.frc.AHRS;
 import com.revrobotics.*;
+import com.ctre.phoenix.*;
 
+import edu.wpi.cscore.CameraServerJNI;
+import edu.wpi.cscore.MjpegServer;
 import edu.wpi.cscore.UsbCamera;
 import edu.wpi.first.cameraserver.CameraServer;
+import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.wpilibj.ADXRS450_Gyro;
 import edu.wpi.first.wpilibj.AnalogGyro;
 import edu.wpi.first.wpilibj.BuiltInAccelerometer;
@@ -47,12 +51,13 @@ public class Robot extends TimedRobot implements PIDOutput {
   private Spark frontLeftMotor, rearLeftMotor, frontRightMotor, rearRightMotor;
   private Gyro gyro;
   private Accelerometer accel;
-  // Boilerplate for later
-  private PIDController pid;
+  private PIDController pid; // Boilerplate for later
   private double kP, kI, kD;
-  private UsbCamera cam0;
   private AHRS ahrs;
+  private UsbCamera cam0;
   private CameraServer camserv;
+  private MjpegServer mjpegserv;
+  private NetworkTable table;
 
   /**
    * This function is run when the robot is first started up and should be
@@ -72,11 +77,11 @@ public class Robot extends TimedRobot implements PIDOutput {
     frontLeftMotor = new Spark(3);
     robotDrive = new MecanumDrive(frontLeftMotor, rearLeftMotor, frontRightMotor, rearRightMotor);
     gyro = new ADXRS450_Gyro(SPI.Port.kOnboardCS0); // Gyro doesn't seem to work; returns 0 reading regardless of rotation
-    //gyro.calibrate();
-    //gyro.reset();
     accel = new BuiltInAccelerometer(); // Needs to be calibrated
-    cam0 = new UsbCamera("camera", 0);
     ahrs = new AHRS(Port.kMXP);
+    camserv = CameraServer.getInstance();
+
+    camserv.startAutomaticCapture();
 
   }
 
