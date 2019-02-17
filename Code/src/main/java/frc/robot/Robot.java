@@ -16,6 +16,7 @@ import edu.wpi.cscore.MjpegServer;
 import edu.wpi.cscore.UsbCamera;
 import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.ADXRS450_Gyro;
 import edu.wpi.first.wpilibj.AnalogGyro;
 import edu.wpi.first.wpilibj.BuiltInAccelerometer;
@@ -49,6 +50,7 @@ public class Robot extends TimedRobot implements PIDOutput {
   private Joystick controller;
   private MecanumDrive robotDrive;
   private Spark frontLeftMotor, rearLeftMotor, frontRightMotor, rearRightMotor;
+  private Spark scissorMotor1;
   private Gyro gyro;
   private Accelerometer accel;
   private PIDController pid; // Boilerplate for later
@@ -75,11 +77,14 @@ public class Robot extends TimedRobot implements PIDOutput {
     rearRightMotor = new Spark(1);
     frontRightMotor = new Spark(2);
     frontLeftMotor = new Spark(3);
+    scissorMotor1 = new Spark(4);
     robotDrive = new MecanumDrive(frontLeftMotor, rearLeftMotor, frontRightMotor, rearRightMotor);
     gyro = new ADXRS450_Gyro(SPI.Port.kOnboardCS0); // Gyro doesn't seem to work; returns 0 reading regardless of rotation
     accel = new BuiltInAccelerometer(); // Needs to be calibrated
     ahrs = new AHRS(Port.kMXP);
     camserv = CameraServer.getInstance();
+    table = NetworkTableInstance.getDefault().getTable("SmartDashboard");
+    System.out.println(table.getKeys());
 
     camserv.startAutomaticCapture();
 
@@ -146,9 +151,10 @@ public class Robot extends TimedRobot implements PIDOutput {
     controller.setYChannel(2); // 0: Left joystick up
     controller.setXChannel(0); // 2: Left joystick side-to-side
     robotDrive.driveCartesian(controller.getY(), controller.getX(), controller.getZ());
+    scissorMotor1.set(controller.getRawAxis(4));
     // Default: 1 0 2
     //System.out.println("Xaccel = " + accel.getX());
-    System.out.println("Angle = " + ahrs.getYaw());
+    //System.out.println("Angle = " + ahrs.getYaw());
   }
 
   @Override
