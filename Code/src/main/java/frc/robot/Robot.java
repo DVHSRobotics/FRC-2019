@@ -20,18 +20,22 @@ import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.ADXRS450_Gyro;
 import edu.wpi.first.wpilibj.AnalogGyro;
 import edu.wpi.first.wpilibj.BuiltInAccelerometer;
+import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.PIDController;
 import edu.wpi.first.wpilibj.PIDOutput;
 import edu.wpi.first.wpilibj.RobotDrive;
 import edu.wpi.first.wpilibj.SPI;
+import edu.wpi.first.wpilibj.Servo;
 import edu.wpi.first.wpilibj.Spark;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.SerialPort.Port;
 import edu.wpi.first.wpilibj.drive.MecanumDrive;
 import edu.wpi.first.wpilibj.interfaces.Accelerometer;
 import edu.wpi.first.wpilibj.interfaces.Gyro;
+import edu.wpi.first.wpilibj.livewindow.LiveWindow;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
@@ -59,7 +63,10 @@ public class Robot extends TimedRobot implements PIDOutput {
   private UsbCamera cam0;
   private CameraServer camserv;
   private MjpegServer mjpegserv;
-  private NetworkTable table;
+  private NetworkTableInstance tableinst;
+  private DigitalInput scissorMotor1In;
+  private DriverStation dsinst;
+  private Servo servo1;
 
   /**
    * This function is run when the robot is first started up and should be
@@ -79,15 +86,15 @@ public class Robot extends TimedRobot implements PIDOutput {
     frontLeftMotor = new Spark(3);
     scissorMotor1 = new Spark(4);
     robotDrive = new MecanumDrive(frontLeftMotor, rearLeftMotor, frontRightMotor, rearRightMotor);
-    gyro = new ADXRS450_Gyro(SPI.Port.kOnboardCS0); // Gyro doesn't seem to work; returns 0 reading regardless of rotation
+    //gyro = new ADXRS450_Gyro(SPI.Port.kOnboardCS0); // Gyro doesn't seem to work; returns 0 reading regardless of rotation
     accel = new BuiltInAccelerometer(); // Needs to be calibrated
-    ahrs = new AHRS(Port.kMXP);
+    //ahrs = new AHRS(Port.kMXP);
     camserv = CameraServer.getInstance();
-    table = NetworkTableInstance.getDefault().getTable("SmartDashboard");
-    System.out.println(table.getKeys());
-
-    camserv.startAutomaticCapture();
-
+    tableinst = NetworkTableInstance.getDefault();
+    scissorMotor1In = new DigitalInput(0);
+    dsinst = DriverStation.getInstance();
+    servo1 = new Servo(5);
+  
   }
 
   /**
@@ -139,7 +146,6 @@ public class Robot extends TimedRobot implements PIDOutput {
 
   @Override
   public void teleopInit() {
-    super.teleopInit();
   }
 
   /**
@@ -152,6 +158,8 @@ public class Robot extends TimedRobot implements PIDOutput {
     controller.setXChannel(0); // 2: Left joystick side-to-side
     robotDrive.driveCartesian(controller.getY(), controller.getX(), controller.getZ());
     scissorMotor1.set(controller.getRawAxis(4));
+    //System.out.println("ScissorLift = " + scissorMotor1In.get());
+    servo1.set(controller.getRawAxis(5));
     // Default: 1 0 2
     //System.out.println("Xaccel = " + accel.getX());
     //System.out.println("Angle = " + ahrs.getYaw());
@@ -159,7 +167,6 @@ public class Robot extends TimedRobot implements PIDOutput {
 
   @Override
   public void testInit() {
-    super.testInit();
   }
 
   /**
@@ -171,12 +178,10 @@ public class Robot extends TimedRobot implements PIDOutput {
 
   @Override
   public void disabledInit() {
-    super.disabledInit();
   }
 
   @Override
   public void disabledPeriodic() {
-    super.disabledPeriodic();
   }
 
   @Override
