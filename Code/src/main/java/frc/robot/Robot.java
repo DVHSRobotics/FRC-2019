@@ -67,6 +67,10 @@ public class Robot extends TimedRobot implements PIDOutput {
   private DigitalInput scissorMotor1In;
   private DriverStation dsinst;
   private Servo servo1;
+  private CANEncoder encoder;
+  private CANSparkMax sparkmax;
+
+  //private Joy2 Joystick; //HIGBY joystick
 
   /**
    * This function is run when the robot is first started up and should be
@@ -94,6 +98,8 @@ public class Robot extends TimedRobot implements PIDOutput {
     scissorMotor1In = new DigitalInput(0);
     dsinst = DriverStation.getInstance();
     servo1 = new Servo(5);
+
+    camserv.startAutomaticCapture();
   
   }
 
@@ -146,15 +152,21 @@ public class Robot extends TimedRobot implements PIDOutput {
 
   @Override
   public void teleopInit() {
+    /*System.out.println("The Cake is What You Think it is For");
+    System.out.println("To LIE");*/
+    //rearRightMotor.setSpeed(.08);
   }
 
   /**
    * This function is called periodically during operator control.
    */
+  
+  //ROHAN'S CODE
+
   @Override
   public void teleopPeriodic() {
-    controller.setZChannel(3); // 1: Right joystick up
-    controller.setYChannel(2); // 0: Left joystick up
+    controller.setZChannel(3); // 1: Right joystick up-and-down
+    controller.setYChannel(2); // 0: Left joystick up-and-down
     controller.setXChannel(0); // 2: Left joystick side-to-side
     robotDrive.driveCartesian(controller.getY(), controller.getX(), controller.getZ());
     scissorMotor1.set(controller.getRawAxis(4));
@@ -167,6 +179,7 @@ public class Robot extends TimedRobot implements PIDOutput {
 
   @Override
   public void testInit() {
+    rearRightMotor.set(-.08);
   }
 
   /**
@@ -187,5 +200,17 @@ public class Robot extends TimedRobot implements PIDOutput {
   @Override
   public void pidWrite(double output) {
   }
+
+  //HIGBY'S CODE
+
+  /*@Override
+  public void teleopPeriodic() {
+  
+    controller.setXChannel(0);
+    controller.setYChannel(2);
+    controller.setZChannel(3);
+    robotDrive.driveCartesian(controller.getY(), controller.getX(), controller.getZ());
+
+  }*/
 
 }
