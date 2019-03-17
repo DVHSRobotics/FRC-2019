@@ -25,6 +25,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.PIDController;
 import edu.wpi.first.wpilibj.PIDOutput;
+import edu.wpi.first.wpilibj.PowerDistributionPanel;
 import edu.wpi.first.wpilibj.RobotDrive;
 import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj.Servo;
@@ -69,6 +70,7 @@ public class Robot extends TimedRobot implements PIDOutput {
   private Servo servo1;
   private CANEncoder encoder;
   private CANSparkMax sparkmax;
+  private PowerDistributionPanel pdp;
 
   //private Joy2 Joystick; //HIGBY joystick
 
@@ -98,9 +100,11 @@ public class Robot extends TimedRobot implements PIDOutput {
     scissorMotor1In = new DigitalInput(0);
     dsinst = DriverStation.getInstance();
     servo1 = new Servo(5);
+    pdp = new PowerDistributionPanel();
 
     camserv.startAutomaticCapture();
-  
+    SmartDashboard.putNumber("PDP Voltage", pdp.getVoltage());
+    SmartDashboard.putNumber("Scissor Motor PWM", scissorMotor1.getRaw());
   }
 
   /**
@@ -169,9 +173,9 @@ public class Robot extends TimedRobot implements PIDOutput {
     controller.setYChannel(2); // 0: Left joystick up-and-down
     controller.setXChannel(0); // 2: Left joystick side-to-side
     robotDrive.driveCartesian(controller.getY(), controller.getX(), controller.getZ());
-    scissorMotor1.set(controller.getRawAxis(4));
+    scissorMotor1.set(controller.getRawAxis(4) * 2);
     //System.out.println("ScissorLift = " + scissorMotor1In.get());
-    servo1.set(controller.getRawAxis(5));
+    servo1.set(controller.getRawAxis(5)); 
     // Default: 1 0 2
     //System.out.println("Xaccel = " + accel.getX());
     //System.out.println("Angle = " + ahrs.getYaw());
@@ -214,3 +218,31 @@ public class Robot extends TimedRobot implements PIDOutput {
   }*/
 
 }
+
+/*
+
+  WHAT THE CONTROLLER IS 
+
+CH1   THR   SB UP
+ +=   ELE   SB NUT
+CH3   RUD   SB UP
+ +=   AIL   SB NUT
+CH4   AIL   SB UP
+ +=   RUD   SB NUT
+CH5   sci BLANK
+CH6   ser BLANK
+CH9   SA DOWN
+CH10  SA UP
+CH11  SB DOWN
+CH12  SB UP
+CH13  SC DOWN
+CH14  SC NUT
+CH15  SC UP
+CH16  SD DOWN
+CH17  SD NUT
+CH18  SD UP
+CH19  SF UP
+CH20  SF DOWN
+CH21  SH NONE
+
+*/
