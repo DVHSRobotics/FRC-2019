@@ -15,6 +15,7 @@ import edu.wpi.cscore.CameraServerJNI;
 import edu.wpi.cscore.MjpegServer;
 import edu.wpi.cscore.UsbCamera;
 import edu.wpi.first.cameraserver.CameraServer;
+import edu.wpi.first.hal.PWMConfigDataResult;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.ADXRS450_Gyro;
@@ -28,6 +29,7 @@ import edu.wpi.first.wpilibj.PIDOutput;
 import edu.wpi.first.wpilibj.PowerDistributionPanel;
 import edu.wpi.first.wpilibj.RobotDrive;
 import edu.wpi.first.wpilibj.SPI;
+import edu.wpi.first.wpilibj.Sendable;
 import edu.wpi.first.wpilibj.Servo;
 import edu.wpi.first.wpilibj.Spark;
 import edu.wpi.first.wpilibj.TimedRobot;
@@ -52,10 +54,10 @@ public class Robot extends TimedRobot implements PIDOutput {
   private static final String kCustomAuto = "My Auto";
   private String m_autoSelected;
   private final SendableChooser<String> m_chooser = new SendableChooser<>();
-  private Joystick controller;
+  private Joystick controller, controller2;
   private MecanumDrive robotDrive;
   private Spark frontLeftMotor, rearLeftMotor, frontRightMotor, rearRightMotor;
-  private Spark scissorMotor1;
+  private Spark scissorMotor1, scissorMotor2;
   private Gyro gyro;
   private Accelerometer accel;
   private PIDController pid; // Boilerplate for later
@@ -71,6 +73,7 @@ public class Robot extends TimedRobot implements PIDOutput {
   private CANEncoder encoder;
   private CANSparkMax sparkmax;
   private PowerDistributionPanel pdp;
+  private PWMConfigDataResult rslt;
 
   //private Joy2 Joystick; //HIGBY joystick
 
@@ -86,11 +89,13 @@ public class Robot extends TimedRobot implements PIDOutput {
     m_period = .02;
 
     controller = new Joystick(0);
+    controller2 = new Joystick(1);
     rearLeftMotor = new Spark(0);
     rearRightMotor = new Spark(1);
     frontRightMotor = new Spark(2);
     frontLeftMotor = new Spark(3);
     scissorMotor1 = new Spark(4);
+    scissorMotor2 = new Spark(5);
     robotDrive = new MecanumDrive(frontLeftMotor, rearLeftMotor, frontRightMotor, rearRightMotor);
     //gyro = new ADXRS450_Gyro(SPI.Port.kOnboardCS0); // Gyro doesn't seem to work; returns 0 reading regardless of rotation
     accel = new BuiltInAccelerometer(); // Needs to be calibrated
@@ -99,12 +104,13 @@ public class Robot extends TimedRobot implements PIDOutput {
     tableinst = NetworkTableInstance.getDefault();
     scissorMotor1In = new DigitalInput(0);
     dsinst = DriverStation.getInstance();
-    servo1 = new Servo(5);
+    servo1 = new Servo(6);
     pdp = new PowerDistributionPanel();
+    rslt = scissorMotor1.getRawBounds();
 
     camserv.startAutomaticCapture();
-    SmartDashboard.putNumber("PDP Voltage", pdp.getVoltage());
-    SmartDashboard.putNumber("Scissor Motor PWM", scissorMotor1.getRaw());
+    //scissorMotor1.setBounds(rslt.max * 2, rslt.deadbandMax, rslt.center, rslt.deadbandMin, 100);
+
   }
 
   /**
@@ -118,6 +124,15 @@ public class Robot extends TimedRobot implements PIDOutput {
   @Override
   public void robotPeriodic() {
     // System.out.println("Y: " + controller.getYChannel() + " X: " + controller.getXChannel() + " Z: " + controller.getZChannel());
+    rslt = scissorMotor1.getRawBounds();
+    SmartDashboard.putNumber("PDP Voltage", pdp.getVoltage());
+    SmartDashboard.putNumber("Scissor Motor Bound Min", scissorMotor1.getRawBounds().min);
+    SmartDashboard.putNumber("Scissor Motor Bound Max", rslt.max);
+    SmartDashboard.putNumber("Scissor Motor Bound Deadband Min", rslt.deadbandMin);
+    SmartDashboard.putNumber("Scissor Motor Bound Deadband Max", rslt.deadbandMax);
+    SmartDashboard.putNumber("Scissor Motor Bound Center", rslt.center);
+    SmartDashboard.putNumber("Scissor Motor PWM", scissorMotor1.getRaw());
+    SmartDashboard.updateValues();
   }
 
   /**
@@ -125,7 +140,7 @@ public class Robot extends TimedRobot implements PIDOutput {
    * between different autonomous modes using the dashboard. The sendable
    * chooser code works with the Java SmartDashboard. If you prefer the
    * LabVIEW Dashboard, remove all of the chooser code and uncomment the
-   * getString line to get the auto name from the text box below the Gyro
+   * getString line to get the auto name from the text box below the Gyro  //ROHAN IS STUPID
    *
    * <p>You can add additional auto modes by adding additional comparisons to
    * the switch structure below with additional strings. If using the
@@ -159,6 +174,7 @@ public class Robot extends TimedRobot implements PIDOutput {
     /*System.out.println("The Cake is What You Think it is For");
     System.out.println("To LIE");*/
     //rearRightMotor.setSpeed(.08);
+    scissorMotor1.setSpeed(-1.0);
   }
 
   /**
@@ -173,17 +189,19 @@ public class Robot extends TimedRobot implements PIDOutput {
     controller.setYChannel(2); // 0: Left joystick up-and-down
     controller.setXChannel(0); // 2: Left joystick side-to-side
     robotDrive.driveCartesian(controller.getY(), controller.getX(), controller.getZ());
-    scissorMotor1.set(controller.getRawAxis(4) * 2);
-    //System.out.println("ScissorLift = " + scissorMotor1In.get());
-    servo1.set(controller.getRawAxis(5)); 
-    // Default: 1 0 2
-    //System.out.println("Xaccel = " + accel.getX());
-    //System.out.println("Angle = " + ahrs.getYaw());
+    scissorMotor1.set(controller2.getY());
+    servo1.set(controller.getRawAxis(5));
+
+    if(controller2.getRawButton(1))
+      scissorMotor2.setPosition(.2);
+    else if (controller2.getRawButton(2))
+      scissorMotor2.setPosition(.8);
+
   }
 
   @Override
   public void testInit() {
-    rearRightMotor.set(-.08);
+    scissorMotor1.set(.99);
   }
 
   /**
