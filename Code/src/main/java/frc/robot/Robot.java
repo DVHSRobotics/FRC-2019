@@ -49,6 +49,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
  * creating this project, you must also update the build.gradle file in the
  * project.
  */
+
 public class Robot extends TimedRobot implements PIDOutput {
   private static final String kDefaultAuto = "Default";
   private static final String kCustomAuto = "My Auto";
@@ -57,7 +58,8 @@ public class Robot extends TimedRobot implements PIDOutput {
   private Joystick controller, controller2;
   private MecanumDrive robotDrive;
   private Spark frontLeftMotor, rearLeftMotor, frontRightMotor, rearRightMotor;
-  private Spark scissorMotor1, scissorMotor2;
+  private Spark scissorMoveMotor, hatchGrabMotor;
+  private Servo rampServos, scissorLiftSpringServo, scissorLiftBlockServo, grabberServo;
   private Gyro gyro;
   private Accelerometer accel;
   private PIDController pid; // Boilerplate for later
@@ -67,20 +69,18 @@ public class Robot extends TimedRobot implements PIDOutput {
   private CameraServer camserv;
   private MjpegServer mjpegserv;
   private NetworkTableInstance tableinst;
-  private DigitalInput scissorMotor1In;
+  private DigitalInput scissorMoveMotorIn;
   private DriverStation dsinst;
-  private Servo servo1;
   private CANEncoder encoder;
   private CANSparkMax sparkmax;
   private PowerDistributionPanel pdp;
   private PWMConfigDataResult rslt;
 
-  //private Joy2 Joystick; //HIGBY joystick
-
   /**
    * This function is run when the robot is first started up and should be
    * used for any initialization code.
    */
+
   @Override
   public void robotInit() {
     m_chooser.setDefaultOption("Default Auto", kDefaultAuto);
@@ -90,23 +90,27 @@ public class Robot extends TimedRobot implements PIDOutput {
 
     controller = new Joystick(0);
     controller2 = new Joystick(1);
+
     rearLeftMotor = new Spark(0);
     rearRightMotor = new Spark(1);
     frontRightMotor = new Spark(2);
     frontLeftMotor = new Spark(3);
-    scissorMotor1 = new Spark(4);
-    scissorMotor2 = new Spark(5);
+    scissorMoveMotor = new Spark(4);
+    hatchGrabMotor = new Spark(5);
+    rampServos = new Servo(6);
+    scissorLiftSpringServo = new Servo(7);
+    scissorLiftBlockServo = new Servo(8);
+
     robotDrive = new MecanumDrive(frontLeftMotor, rearLeftMotor, frontRightMotor, rearRightMotor);
     //gyro = new ADXRS450_Gyro(SPI.Port.kOnboardCS0); // Gyro doesn't seem to work; returns 0 reading regardless of rotation
-    accel = new BuiltInAccelerometer(); // Needs to be calibrated
+    // accel = new BuiltInAccelerometer(); // Needs to be calibrated
     //ahrs = new AHRS(Port.kMXP);
     camserv = CameraServer.getInstance();
     tableinst = NetworkTableInstance.getDefault();
-    scissorMotor1In = new DigitalInput(0);
+    // scissorMotor1In = new DigitalInput(0);
     dsinst = DriverStation.getInstance();
-    servo1 = new Servo(6);
     pdp = new PowerDistributionPanel();
-    rslt = scissorMotor1.getRawBounds();
+    rslt = scissorMoveMotor.getRawBounds();
 
     camserv.startAutomaticCapture();
     //scissorMotor1.setBounds(rslt.max * 2, rslt.deadbandMax, rslt.center, rslt.deadbandMin, 100);
@@ -123,15 +127,13 @@ public class Robot extends TimedRobot implements PIDOutput {
    */
   @Override
   public void robotPeriodic() {
-    // System.out.println("Y: " + controller.getYChannel() + " X: " + controller.getXChannel() + " Z: " + controller.getZChannel());
-    rslt = scissorMotor1.getRawBounds();
     SmartDashboard.putNumber("PDP Voltage", pdp.getVoltage());
-    SmartDashboard.putNumber("Scissor Motor Bound Min", scissorMotor1.getRawBounds().min);
-    SmartDashboard.putNumber("Scissor Motor Bound Max", rslt.max);
-    SmartDashboard.putNumber("Scissor Motor Bound Deadband Min", rslt.deadbandMin);
-    SmartDashboard.putNumber("Scissor Motor Bound Deadband Max", rslt.deadbandMax);
-    SmartDashboard.putNumber("Scissor Motor Bound Center", rslt.center);
-    SmartDashboard.putNumber("Scissor Motor PWM", scissorMotor1.getRaw());
+    SmartDashboard.putNumber("Scissor Motor Bound Min", scissorMoveMotor.getRawBounds().min);
+    SmartDashboard.putNumber("Scissor Motor Bound Max", scissorMoveMotor.getRawBounds().max);
+    SmartDashboard.putNumber("Scissor Motor Bound Deadband Min", scissorMoveMotor.getRawBounds().deadbandMin);
+    SmartDashboard.putNumber("Scissor Motor Bound Deadband Max", scissorMoveMotor.getRawBounds().deadbandMax);
+    SmartDashboard.putNumber("Scissor Motor Bound Center", scissorMoveMotor.getRawBounds().center);
+    SmartDashboard.putNumber("Scissor Motor PWM", scissorMoveMotor.getRaw());
     SmartDashboard.updateValues();
   }
 
@@ -174,39 +176,43 @@ public class Robot extends TimedRobot implements PIDOutput {
     /*System.out.println("The Cake is What You Think it is For");
     System.out.println("To LIE");*/
     //rearRightMotor.setSpeed(.08);
-    scissorMotor1.setSpeed(-1.0);
+    //scissorMoveMotor.setSpeed(-1.0);
+    //rampServos.set(0.0);
   }
 
   /**
    * This function is called periodically during operator control.
    */
   
-  //ROHAN'S CODE
-
   @Override
   public void teleopPeriodic() {
     controller.setZChannel(3); // 1: Right joystick up-and-down
     controller.setYChannel(2); // 0: Left joystick up-and-down
     controller.setXChannel(0); // 2: Left joystick side-to-side
     robotDrive.driveCartesian(controller.getY(), controller.getX(), controller.getZ());
-    scissorMotor1.set(controller2.getY());
-    servo1.set(controller.getRawAxis(5));
+    //scissorMoveMotor.set(controller2.getY());
 
-    if(controller2.getRawButton(1))
-      scissorMotor2.setPosition(.2);
+    /*if(controller2.getRawButton(1))
+      scissorMoveMotor.setPosition(.2);
     else if (controller2.getRawButton(2))
-      scissorMotor2.setPosition(.8);
+      scissorMoveMotor.setPosition(.8);*/
+    
+    // Ramp Deploy
+    if(controller.getRawButton(11))
+      rampServos.set(.5);
+    else
+      rampServos.set(0.0);
 
   }
 
   @Override
   public void testInit() {
-    scissorMotor1.set(.99);
   }
 
   /**
    * This function is called periodically during test mode.
    */
+
   @Override
   public void testPeriodic() {
   }
@@ -222,18 +228,6 @@ public class Robot extends TimedRobot implements PIDOutput {
   @Override
   public void pidWrite(double output) {
   }
-
-  //HIGBY'S CODE
-
-  /*@Override
-  public void teleopPeriodic() {
-  
-    controller.setXChannel(0);
-    controller.setYChannel(2);
-    controller.setZChannel(3);
-    robotDrive.driveCartesian(controller.getY(), controller.getX(), controller.getZ());
-
-  }*/
 
 }
 
