@@ -9,6 +9,9 @@ package frc.robot;
 
 import com.kauailabs.navx.frc.AHRS;
 import com.revrobotics.*;
+
+import javax.lang.model.util.ElementScanner6;
+
 import com.ctre.phoenix.*;
 
 import edu.wpi.cscore.CameraServerJNI;
@@ -58,7 +61,7 @@ public class Robot extends TimedRobot implements PIDOutput {
   private Joystick controller, controller2;
   private MecanumDrive robotDrive;
   private Spark frontLeftMotor, rearLeftMotor, frontRightMotor, rearRightMotor;
-  private Spark scissorMoveMotor, hatchGrabMotor;
+  private Spark scissorLiftMotor, hatchGrabMotor;
   private Servo rampServos, scissorLiftSpringServo, scissorLiftBlockServo, grabberServo;
   private Gyro gyro;
   private Accelerometer accel;
@@ -69,12 +72,14 @@ public class Robot extends TimedRobot implements PIDOutput {
   private CameraServer camserv;
   private MjpegServer mjpegserv;
   private NetworkTableInstance tableinst;
-  private DigitalInput scissorMoveMotorIn;
+  private DigitalInput hatchGrabMotorIn;
   private DriverStation dsinst;
   private CANEncoder encoder;
   private CANSparkMax sparkmax;
   private PowerDistributionPanel pdp;
   private PWMConfigDataResult rslt;
+  private int hatchMotorCount;
+  private boolean lastHatchMotorIn;
 
   /**
    * This function is run when the robot is first started up and should be
@@ -95,11 +100,13 @@ public class Robot extends TimedRobot implements PIDOutput {
     rearRightMotor = new Spark(1);
     frontRightMotor = new Spark(2);
     frontLeftMotor = new Spark(3);
-    scissorMoveMotor = new Spark(4);
+    scissorLiftMotor = new Spark(4);
     hatchGrabMotor = new Spark(5);
     rampServos = new Servo(6);
     scissorLiftSpringServo = new Servo(7);
     scissorLiftBlockServo = new Servo(8);
+
+    hatchGrabMotorIn = new DigitalInput(0);
 
     robotDrive = new MecanumDrive(frontLeftMotor, rearLeftMotor, frontRightMotor, rearRightMotor);
     //gyro = new ADXRS450_Gyro(SPI.Port.kOnboardCS0); // Gyro doesn't seem to work; returns 0 reading regardless of rotation
@@ -110,49 +117,69 @@ public class Robot extends TimedRobot implements PIDOutput {
     // scissorMotor1In = new DigitalInput(0);
     dsinst = DriverStation.getInstance();
     pdp = new PowerDistributionPanel();
-    rslt = scissorMoveMotor.getRawBounds();
+    rslt = scissorLiftMotor.getRawBounds();
+
+    hatchMotorCount = 0;
+    lastHatchMotorIn = false;
 
     camserv.startAutomaticCapture();
-    //scissorMotor1.setBounds(rslt.max * 2, rslt.deadbandMax, rslt.center, rslt.deadbandMin, 100);
+
+    controller.setZChannel(3); // 1: Right joystick up-and-down
+    controller.setYChannel(2); // 0: Left joystick up-and-down
+    controller.setXChannel(0); // 2: Left joystick side-to-side
+
+    // scissorMotor1.setBounds(rslt.max * 2, rslt.deadbandMax, rslt.center,
+    // rslt.deadbandMin, 100);
 
   }
 
   /**
-   * This function is called every robot packet, no matter the mode. Use
-   * this for items like diagnostics that you want ran during disabled,
-   * autonomous, teleoperated and test.
+   * This function is called every robot packet, no matter the mode. Use this for
+   * items like diagnostics that you want ran during disabled, autonomous,
+   * teleoperated and test.
    *
-   * <p>This runs after the mode specific periodic functions, but before
-   * LiveWindow and SmartDashboard integrated updating.
+   * <p>
+   * This runs after the mode specific periodic functions, but before LiveWindow
+   * and SmartDashboard integrated updating.
    */
   @Override
   public void robotPeriodic() {
-    SmartDashboard.putNumber("PDP Voltage", pdp.getVoltage());
-    SmartDashboard.putNumber("Scissor Motor Bound Min", scissorMoveMotor.getRawBounds().min);
-    SmartDashboard.putNumber("Scissor Motor Bound Max", scissorMoveMotor.getRawBounds().max);
-    SmartDashboard.putNumber("Scissor Motor Bound Deadband Min", scissorMoveMotor.getRawBounds().deadbandMin);
-    SmartDashboard.putNumber("Scissor Motor Bound Deadband Max", scissorMoveMotor.getRawBounds().deadbandMax);
-    SmartDashboard.putNumber("Scissor Motor Bound Center", scissorMoveMotor.getRawBounds().center);
-    SmartDashboard.putNumber("Scissor Motor PWM", scissorMoveMotor.getRaw());
-    SmartDashboard.updateValues();
+    /*
+     * SmartDashboard.putNumber("PDP Voltage", pdp.getVoltage());
+     * SmartDashboard.putNumber("Scissor Motor Bound Min",
+     * scissorLiftMotor.getRawBounds().min);
+     * SmartDashboard.putNumber("Scissor Motor Bound Max",
+     * scissorLiftMotor.getRawBounds().max);
+     * SmartDashboard.putNumber("Scissor Motor Bound Deadband Min",
+     * scissorLiftMotor.getRawBounds().deadbandMin);
+     * SmartDashboard.putNumber("Scissor Motor Bound Deadband Max",
+     * scissorLiftMotor.getRawBounds().deadbandMax);
+     * SmartDashboard.putNumber("Scissor Motor Bound Center",
+     * scissorLiftMotor.getRawBounds().center);
+     * SmartDashboard.putNumber("Scissor Motor PWM", scissorLiftMotor.getRaw());
+     * SmartDashboard.updateValues();
+     */
+    //hatchMotorCount++;
+    //SmartDashboard.putBoolean("value", hatchGrabMotorIn.get());
   }
 
   /**
    * This autonomous (along with the chooser code above) shows how to select
-   * between different autonomous modes using the dashboard. The sendable
-   * chooser code works with the Java SmartDashboard. If you prefer the
-   * LabVIEW Dashboard, remove all of the chooser code and uncomment the
-   * getString line to get the auto name from the text box below the Gyro  //ROHAN IS STUPID
+   * between different autonomous modes using the dashboard. The sendable chooser
+   * code works with the Java SmartDashboard. If you prefer the LabVIEW Dashboard,
+   * remove all of the chooser code and uncomment the getString line to get the
+   * auto name from the text box below the Gyro //ROHAN IS STUPID
    *
-   * <p>You can add additional auto modes by adding additional comparisons to
-   * the switch structure below with additional strings. If using the
-   * SendableChooser make sure to add them to the chooser code above as well.
+   * <p>
+   * You can add additional auto modes by adding additional comparisons to the
+   * switch structure below with additional strings. If using the SendableChooser
+   * make sure to add them to the chooser code above as well.
    */
   @Override
   public void autonomousInit() {
     m_autoSelected = m_chooser.getSelected();
     // m_autoSelected = SmartDashboard.getString("Auto Selector", kDefaultAuto);
-    System.out.println("Auto selected: " + m_autoSelected);
+    // System.out.println("Auto selected: " + m_autoSelected);
   }
 
   /**
@@ -160,48 +187,62 @@ public class Robot extends TimedRobot implements PIDOutput {
    */
   @Override
   public void autonomousPeriodic() {
-    switch (m_autoSelected) {
-      case kCustomAuto:
-        // Put custom auto code here
-        break;
-      case kDefaultAuto:
-      default:
-        // Put default auto code here
-        break;
-    }
+    /*switch (m_autoSelected) {
+    case kCustomAuto:
+      // Put custom auto code here
+      break;
+    case kDefaultAuto:
+    default:
+      // Put default auto code here
+      break;
+    }*/
+    robotDrive.driveCartesian(controller.getY(), controller.getX(), controller.getZ());
   }
 
   @Override
   public void teleopInit() {
-    /*System.out.println("The Cake is What You Think it is For");
-    System.out.println("To LIE");*/
-    //rearRightMotor.setSpeed(.08);
-    //scissorMoveMotor.setSpeed(-1.0);
-    //rampServos.set(0.0);
+    /*
+     * System.out.println("The Cake is What You Think it is For");
+     * System.out.println("To LIE");
+     */
+    // rearRightMotor.setSpeed(.08);
+    // scissorLiftMotor.setSpeed(-1.0);
+    // rampServos.set(0.0);
   }
 
   /**
    * This function is called periodically during operator control.
    */
-  
+
   @Override
   public void teleopPeriodic() {
-    controller.setZChannel(3); // 1: Right joystick up-and-down
-    controller.setYChannel(2); // 0: Left joystick up-and-down
-    controller.setXChannel(0); // 2: Left joystick side-to-side
-    robotDrive.driveCartesian(controller.getY(), controller.getX(), controller.getZ());
-    //scissorMoveMotor.set(controller2.getY());
-
-    /*if(controller2.getRawButton(1))
-      scissorMoveMotor.setPosition(.2);
-    else if (controller2.getRawButton(2))
-      scissorMoveMotor.setPosition(.8);*/
     
+    robotDrive.driveCartesian(controller.getY(), controller.getX(), controller.getZ());
+    scissorLiftMotor.set(-controller2.getY()/60);
+
     // Ramp Deploy
     if(controller.getRawButton(11))
       rampServos.set(.5);
     else
       rampServos.set(0.0);
+    
+    /*if (hatchGrabMotorIn.get() != lastHatchMotorIn && hatchMotorCount < 44) {
+      hatchMotorCount++;
+      lastHatchMotorIn = hatchGrabMotorIn.get();
+      hatchGrabMotor.set(controller2.getRawButtonPressed(1) ? .5 : controller2.getRawButtonPressed(2) ? -.5 : 0.0);
+    } else if (hatchMotorCount == 44) {
+      hatchMotorCount = 0;
+      lastHatchMotorIn = false;
+      hatchGrabMotor.set(0.0);
+    } else
+      hatchGrabMotor.set(0.0);*/
+
+    //SmartDashboard.putNumber("Motor Counts", hatchMotorCount);
+
+    /*if(controller2.getRawButton(1))
+      scissorLiftMotor.setPosition(.2);
+    else if (controller2.getRawButton(2))
+      scissorLiftMotor.setPosition(.8);*/
 
   }
 
