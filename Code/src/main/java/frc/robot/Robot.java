@@ -12,6 +12,7 @@
   NEXGEN ROBOTICS GITHUB: https://github.com/DVHSRobotics
   WPILIB SPREENSTEPS WEBSITE: https://wpilib.screenstepslive.com/s
   PID: https://wpilib.screenstepslive.com/s/3120/m/7912/l/79828-operating-the-robot-with-feedback-from-sensors-pid-control
+  INFO ABOUT GITHUB: https://guides.github.com/activities/hello-world/
   
   PARTS:
   OFFICIAL FRC ROBOT PARTS OVERVIEW: http://wpilib.screenstepslive.com/s/currentCS/m/getting_started/l/599672-frc-control-system-hardware-overview
@@ -21,6 +22,9 @@
 
   Hover over method or class names or right click on them to get more information about them.
   Ask Mr. Palmer or Andrew if confused about anything. Or just do a Google search.
+
+  To save any changes to the NexGen online Github, do Ctrl+P, then type ">Git" and select "Git:Commit All". Enter a description of
+  the changes, then confirm it. Then click the refresh button in the bottom left corner.
 */
 
 package frc.robot;
