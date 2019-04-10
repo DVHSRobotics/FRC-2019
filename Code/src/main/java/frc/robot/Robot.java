@@ -5,15 +5,32 @@
 /* the project.                                                               */
 /*----------------------------------------------------------------------------*/
 
+/*
+  PRIMARY REFERENCES:
+  FULL FRC ROBOT CONTROL SYSTEM DOCUMENTATION: https://wpilib.screenstepslive.com/s/4485
+  FULL JAVA API DOCUMENTATION: https://wpilib.screenstepslive.com/s/currentCS/m/java/l/272787-frc-java-wpilib-api-documentation
+  NEXGEN ROBOTICS GITHUB: https://github.com/DVHSRobotics
+  WPILIB SPREENSTEPS WEBSITE: https://wpilib.screenstepslive.com/s
+  PID: https://wpilib.screenstepslive.com/s/3120/m/7912/l/79828-operating-the-robot-with-feedback-from-sensors-pid-control
+  
+  PARTS:
+  OFFICIAL FRC ROBOT PARTS OVERVIEW: http://wpilib.screenstepslive.com/s/currentCS/m/getting_started/l/599672-frc-control-system-hardware-overview
+  REV NEO MOTORS: http://www.revrobotics.com/rev-21-1650/
+  SPARK MAX MOTOR CONTROLLERS: http://www.revrobotics.com/rev-11-2158/
+  POWER DISTRIBUTION PANEL (PDP): http://www.ctr-electronics.com/pdp.html#product_tabs_technical_resources
+
+  Hover over method or class names or right click on them to get more information about them.
+  Ask Mr. Palmer or Andrew if confused about anything. Or just do a Google search.
+*/
+
 package frc.robot;
 
-import com.kauailabs.navx.frc.AHRS;
+// Third party imports (didn't come with WPIlib)
+import com.kauailabs.navx.frc.AHRS; // Source: https://pdocs.kauailabs.com/navx-mxp/software/roborio-libraries/java/
 import com.revrobotics.*;
-
-import javax.lang.model.util.ElementScanner6;
-
 import com.ctre.phoenix.*;
 
+// Default imports
 import edu.wpi.cscore.CameraServerJNI;
 import edu.wpi.cscore.MjpegServer;
 import edu.wpi.cscore.UsbCamera;
@@ -52,8 +69,9 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
  * creating this project, you must also update the build.gradle file in the
  * project.
  */
-
 public class Robot extends TimedRobot implements PIDOutput {
+
+  // DECLARE CLASS VARIABLES
   private static final String kDefaultAuto = "Default";
   private static final String kCustomAuto = "My Auto";
   private String m_autoSelected;
@@ -65,7 +83,7 @@ public class Robot extends TimedRobot implements PIDOutput {
   private Servo rampServos, scissorLiftSpringServo, scissorLiftBlockServo, grabberServo;
   private Gyro gyro;
   private Accelerometer accel;
-  private PIDController pid; // Boilerplate for later
+  private PIDController pid; // Currently not needed
   private double kP, kI, kD;
   private AHRS ahrs;
   private UsbCamera cam0;
@@ -85,7 +103,6 @@ public class Robot extends TimedRobot implements PIDOutput {
    * This function is run when the robot is first started up and should be
    * used for any initialization code.
    */
-
   @Override
   public void robotInit() {
     m_chooser.setDefaultOption("Default Auto", kDefaultAuto);
@@ -93,48 +110,50 @@ public class Robot extends TimedRobot implements PIDOutput {
     SmartDashboard.putData("Auto choices", m_chooser);
     m_period = .02;
 
+    // INITIALIZE VARIABLES DECLARED EARLIER
+
+    // Controllers
     controller = new Joystick(0);
     controller2 = new Joystick(1);
 
+    // Wheel Motors
     rearLeftMotor = new Spark(0);
     rearRightMotor = new Spark(1);
     frontRightMotor = new Spark(2);
     frontLeftMotor = new Spark(3);
+
+    // Other motors & servos
     scissorLiftMotor = new Spark(4);
     hatchGrabMotor = new Spark(5);
     rampServos = new Servo(6);
     scissorLiftSpringServo = new Servo(7);
     scissorLiftBlockServo = new Servo(8);
 
+    // Input for Hall Effect Sensor to DIO attachment for Bosch Seat Motor
+    // NEVER WORKED - CONTACT BOSCH IF INTERESTED
     hatchGrabMotorIn = new DigitalInput(0);
 
+    // Mecanum Drive
     robotDrive = new MecanumDrive(frontLeftMotor, rearLeftMotor, frontRightMotor, rearRightMotor);
-    //gyro = new ADXRS450_Gyro(SPI.Port.kOnboardCS0); // Gyro doesn't seem to work; returns 0 reading regardless of rotation
-    // accel = new BuiltInAccelerometer(); // Needs to be calibrated
-    //ahrs = new AHRS(Port.kMXP);
+
+    // Sensors - unneeded
+    //gyro = new ADXRS450_Gyro(SPI.Port.kOnboardCS0); // FRC Gyro doesn't seem to work; returns 0 reading regardless of rotation
+    //accel = new BuiltInAccelerometer(); // Accelerometer built into rio - Needs to be calibrated
+    //ahrs = new AHRS(Port.kMXP); // NavX (plugs into large center port of Rio)
+
+    // Camera variables
     camserv = CameraServer.getInstance();
     tableinst = NetworkTableInstance.getDefault();
-    // scissorMotor1In = new DigitalInput(0);
     dsinst = DriverStation.getInstance();
     pdp = new PowerDistributionPanel();
     rslt = scissorLiftMotor.getRawBounds();
 
-    hatchMotorCount = 0;
-    lastHatchMotorIn = false;
-
+    // Initilize camera feeds once
     camserv.startAutomaticCapture();
-
-    controller.setZChannel(3); // 1: Right joystick up-and-down
-    controller.setYChannel(2); // 0: Left joystick up-and-down
-    controller.setXChannel(0); // 2: Left joystick side-to-side
-
-    // scissorMotor1.setBounds(rslt.max * 2, rslt.deadbandMax, rslt.center,
-    // rslt.deadbandMin, 100);
-
   }
 
   /**
-   * This function is called every robot packet, no matter the mode. Use this for
+   * This function is called repeatedly (every robot packet), no matter the mode. Use this for
    * items like diagnostics that you want ran during disabled, autonomous,
    * teleoperated and test.
    *
@@ -144,23 +163,6 @@ public class Robot extends TimedRobot implements PIDOutput {
    */
   @Override
   public void robotPeriodic() {
-    /*
-     * SmartDashboard.putNumber("PDP Voltage", pdp.getVoltage());
-     * SmartDashboard.putNumber("Scissor Motor Bound Min",
-     * scissorLiftMotor.getRawBounds().min);
-     * SmartDashboard.putNumber("Scissor Motor Bound Max",
-     * scissorLiftMotor.getRawBounds().max);
-     * SmartDashboard.putNumber("Scissor Motor Bound Deadband Min",
-     * scissorLiftMotor.getRawBounds().deadbandMin);
-     * SmartDashboard.putNumber("Scissor Motor Bound Deadband Max",
-     * scissorLiftMotor.getRawBounds().deadbandMax);
-     * SmartDashboard.putNumber("Scissor Motor Bound Center",
-     * scissorLiftMotor.getRawBounds().center);
-     * SmartDashboard.putNumber("Scissor Motor PWM", scissorLiftMotor.getRaw());
-     * SmartDashboard.updateValues();
-     */
-    //hatchMotorCount++;
-    //SmartDashboard.putBoolean("value", hatchGrabMotorIn.get());
   }
 
   /**
@@ -178,12 +180,12 @@ public class Robot extends TimedRobot implements PIDOutput {
   @Override
   public void autonomousInit() {
     m_autoSelected = m_chooser.getSelected();
-    // m_autoSelected = SmartDashboard.getString("Auto Selector", kDefaultAuto);
-    // System.out.println("Auto selected: " + m_autoSelected);
+    m_autoSelected = SmartDashboard.getString("Auto Selector", kDefaultAuto);
+    System.out.println("Auto selected: " + m_autoSelected);
   }
 
   /**
-   * This function is called periodically during autonomous.
+   * This function is called periodically (repeatedly) during autonomous.
    */
   @Override
   public void autonomousPeriodic() {
@@ -196,29 +198,29 @@ public class Robot extends TimedRobot implements PIDOutput {
       // Put default auto code here
       break;
     }*/
+
+    // Manually drive robot during autonomous mode
+    controller.setZChannel(3); // 1: Right joystick up-and-down
+    controller.setYChannel(2); // 0: Left joystick up-and-down
+    controller.setXChannel(0); // 2: Left joystick side-to-side
     robotDrive.driveCartesian(controller.getY(), controller.getX(), controller.getZ());
   }
 
   @Override
   public void teleopInit() {
-    /*
-     * System.out.println("The Cake is What You Think it is For");
-     * System.out.println("To LIE");
-     */
-    // rearRightMotor.setSpeed(.08);
-    // scissorLiftMotor.setSpeed(-1.0);
-    // rampServos.set(0.0);
   }
 
   /**
-   * This function is called periodically during operator control.
+   * This function is called periodically (repeatedly) during teleop mode.
    */
-
   @Override
   public void teleopPeriodic() {
-    
+    // Manual Driving
+    controller.setZChannel(3); // 1: Right joystick up-and-down
+    controller.setYChannel(2); // 0: Left joystick up-and-down
+    controller.setXChannel(0); // 2: Left joystick side-to-side
     robotDrive.driveCartesian(controller.getY(), controller.getX(), controller.getZ());
-    scissorLiftMotor.set(-controller2.getY()/60);
+    scissorLiftMotor.setSpeed(-.2);
 
     // Ramp Deploy
     if(controller.getRawButton(11))
@@ -237,13 +239,10 @@ public class Robot extends TimedRobot implements PIDOutput {
     } else
       hatchGrabMotor.set(0.0);*/
 
-    //SmartDashboard.putNumber("Motor Counts", hatchMotorCount);
-
     /*if(controller2.getRawButton(1))
       scissorLiftMotor.setPosition(.2);
     else if (controller2.getRawButton(2))
       scissorLiftMotor.setPosition(.8);*/
-
   }
 
   @Override
@@ -253,7 +252,6 @@ public class Robot extends TimedRobot implements PIDOutput {
   /**
    * This function is called periodically during test mode.
    */
-
   @Override
   public void testPeriodic() {
   }
@@ -266,6 +264,7 @@ public class Robot extends TimedRobot implements PIDOutput {
   public void disabledPeriodic() {
   }
 
+  // Necessary for PID
   @Override
   public void pidWrite(double output) {
   }
