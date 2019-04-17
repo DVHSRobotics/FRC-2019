@@ -12,7 +12,8 @@
   NEXGEN ROBOTICS GITHUB: https://github.com/DVHSRobotics
   WPILIB SPREENSTEPS WEBSITE: https://wpilib.screenstepslive.com/s
   PID: https://wpilib.screenstepslive.com/s/3120/m/7912/l/79828-operating-the-robot-with-feedback-from-sensors-pid-control
-  INFO ABOUT GITHUB: https://guides.github.com/activities/hello-world/
+  GITHUB GUIDE: https://guides.github.com/activities/hello-world/
+  PHOENIX TUNER SOFTWARE (Already installed): https://phoenix-documentation.readthedocs.io/en/latest/ch03_PrimerPhoenixSoft.html
   
   PARTS:
   OFFICIAL FRC ROBOT PARTS OVERVIEW: http://wpilib.screenstepslive.com/s/currentCS/m/getting_started/l/599672-frc-control-system-hardware-overview
@@ -21,10 +22,16 @@
   POWER DISTRIBUTION PANEL (PDP): http://www.ctr-electronics.com/pdp.html#product_tabs_technical_resources
 
   Hover over method or class names or right click on them to get more information about them.
-  Ask Mr. Palmer or Andrew if confused about anything. Or just do a Google search.
+  Ask Mr. Palmer or Andrew, or ping me (Rohan) on Slack if confused about anything. Or just do a Google search.
 
-  To save any changes to the NexGen online Github, do Ctrl+P, then type ">Git" and select "Git:Commit All". Enter a description of
-  the changes, then confirm it. Then click the refresh button in the bottom left corner.
+  To save any changes to the NexGen online Github, do Ctrl+P (to run a command), then type ">Git" and select "Git:Commit All". Enter a description of
+  the changes, then confirm it. Then click the refresh button in the bottom left corner. Also remeber to refresh periodically by clicking the same button 
+  to keep everything here up to date with the GitHub.
+
+  REMEMBER TO MAKE A NEW REPOSITORY (REPO) IN THE GITHUB (naming it "FRC-(YEAR)", e.g. "FRC-2019") WITH A NEW ROBOT PROGRAM FOR EACH NEW YEAR OF COMPEITITON.
+  You will then have to make a local copy, or clone, each new repo to this computer by running (Ctrl+P) the ">Git:Clone" command and then entering the
+  URL for the new repo.
+  DON'T JUST USE THE PREVIOUS YEARS' PROGRAMS FOR NEW YEARS. THAT IS MESSY.
 */
 
 package frc.robot;
@@ -104,7 +111,7 @@ public class Robot extends TimedRobot implements PIDOutput {
   private boolean lastHatchMotorIn;
 
   /**
-   * This function is run when the robot is first started up and should be
+   * This function is run once when the robot is first started up and should be
    * used for any initialization code.
    */
   @Override
@@ -210,12 +217,15 @@ public class Robot extends TimedRobot implements PIDOutput {
     robotDrive.driveCartesian(controller.getY(), controller.getX(), controller.getZ());
   }
 
+   /**
+   * This function is called once when teleop mode is enabled.
+   */
   @Override
   public void teleopInit() {
   }
 
   /**
-   * This function is called periodically (repeatedly) during teleop mode.
+   * This function is called repeatedly (endlessly) during teleop mode.
    */
   @Override
   public void teleopPeriodic() {
@@ -232,6 +242,7 @@ public class Robot extends TimedRobot implements PIDOutput {
     else
       rampServos.set(0.0);
     
+    // DISREGARD THE FOLLOWING CODE BLOCK
     /*if (hatchGrabMotorIn.get() != lastHatchMotorIn && hatchMotorCount < 44) {
       hatchMotorCount++;
       lastHatchMotorIn = hatchGrabMotorIn.get();
@@ -249,21 +260,30 @@ public class Robot extends TimedRobot implements PIDOutput {
       scissorLiftMotor.setPosition(.8);*/
   }
 
+   /**
+   * This function is called once when test mode is enabled.
+   */
   @Override
   public void testInit() {
   }
 
   /**
-   * This function is called periodically during test mode.
+   * This function is called repeatedly during test mode.
    */
   @Override
   public void testPeriodic() {
   }
 
+  /**
+   * This function is called once when the robot is disabled.
+   */
   @Override
   public void disabledInit() {
   }
 
+  /**
+   * This function is called repeatedly when the robot is disabled.
+   */
   @Override
   public void disabledPeriodic() {
   }
